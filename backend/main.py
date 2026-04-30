@@ -3,8 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from routers import auth, rooms, devices, logs, schedules, guests
 from fastapi import Response
+import models
+from database import engine
 
-Base.metadata.create_all(bind=engine)
+# This creates the tables in the database automatically
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="HomeIQ API", version="1.0.0")
 
