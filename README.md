@@ -27,7 +27,12 @@ Then:
 - Backend API: `http://localhost:8000`
 - Frontend app: `http://localhost:4173`
 
-### Notes
+### Environment files
+- Copy `backend/.env.example` to `backend/.env`
+- Copy `frontend/.env.example` to `frontend/.env`
 - Do not commit `.env` files to Git
+
+### Notes
 - Use production values for `DATABASE_URL` and `VITE_API_BASE_URL` in deployment
 - Configure CORS in `backend/main.py` for production origins
+- Use a secure `SECRET_KEY` in production
