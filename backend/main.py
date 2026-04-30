@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from routers import auth, rooms, devices, logs, schedules, guests
+from fastapi import Response
 
 Base.metadata.create_all(bind=engine)
 
@@ -25,3 +26,9 @@ app.include_router(guests.router, prefix="/guests", tags=["Guests"])
 @app.get("/")
 def root():
     return {"message": "Welcome to HomeIQ API"}
+
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204) # 204 means "No Content"

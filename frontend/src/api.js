@@ -1,6 +1,8 @@
-import axios from 'axios'
+import axios from 'axios';
 
-const API = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000' })
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL
+});
 
 export const registerUser = (data) => API.post('/auth/register', data)
 export const loginUser = (data) => API.post('/auth/login', data)
