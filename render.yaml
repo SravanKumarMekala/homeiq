@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: homeiq-backend
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: homeiq-db
+          property: connectionString
+  - type: psql
+    name: homeiq-db
+  - type: web
+    name: homeiq-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://homeiq-backend.onrender.com

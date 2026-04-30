@@ -1,16 +1,32 @@
-# React + Vite
+# HomeIQ
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack home automation application with React frontend and FastAPI backend.
 
-Currently, two official plugins are available:
+## Deployment on Render
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+This project is configured for deployment on Render using the `render.yaml` file.
 
-## React Compiler
+### Steps to Deploy:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Push this code to a GitHub repository.
 
-## Expanding the ESLint configuration
+2. Go to [Render Dashboard](https://dashboard.render.com) and connect your GitHub repo.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+3. Render will detect the `render.yaml` and set up the services:
+   - PostgreSQL database
+   - Backend web service (Python/FastAPI)
+   - Frontend static site (React/Vite)
+
+4. After deployment, update the `VITE_API_URL` environment variable in the frontend service to match the backend's URL (e.g., `https://homeiq-backend.onrender.com`).
+
+5. The frontend will be accessible at the static site URL, and the API at the web service URL.
+
+### Local Development
+
+- Backend: `cd backend && pip install -r requirements.txt && uvicorn main:app --reload`
+- Frontend: `cd frontend && npm install && npm run dev`
+
+### Environment Variables
+
+- `DATABASE_URL`: PostgreSQL connection string (provided by Render)
+- `VITE_API_URL`: Backend API URL for the frontend
