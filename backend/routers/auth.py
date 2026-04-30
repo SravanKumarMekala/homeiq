@@ -6,9 +6,10 @@ from schemas import UserCreate, UserLogin, UserOut, Token
 from jose import jwt
 from datetime import datetime, timedelta
 import hashlib
+import os
 
 router = APIRouter()
-SECRET_KEY = "homeiq_super_secret_key"
+SECRET_KEY = os.getenv("SECRET_KEY", "a_very_insecure_fallback_for_debugging_only")
 ALGORITHM = "HS256"
 
 def hash_password(password: str):
