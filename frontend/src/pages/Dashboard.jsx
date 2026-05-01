@@ -31,31 +31,32 @@ export default function Dashboard({ user, onLogout }) {
 
   const loadRooms = async () => {
     try {
-      const res = await getRooms()
-      // Fix: Force result to be an array so .map() doesn't crash
-      const data = Array.isArray(res.data) ? res.data : [] 
-      setRooms(data)
+      const res = await getRooms();
+      // This line is the most important: It checks if we got a list. 
+      // If not, it uses an empty list [] instead of crashing.
+      const data = Array.isArray(res.data) ? res.data : []; 
+      setRooms(data);
       
       if (data.length > 0 && !selectedRoom) {
-        loadDevices(data[0])
+        loadDevices(data[0]);
       }
     } catch (e) { 
-      console.error(e)
-      setRooms([]) 
+      console.error("Failed to load rooms:", e);
+      setRooms([]); // Fallback to empty list on error
     }
-  }
+  };
 
   const loadDevices = async (room) => {
-    if (!room?.id) return
-    setSelectedRoom(room)
+    if (!room?.id) return;
+    setSelectedRoom(room);
     try {
-      const res = await getDevicesByRoom(room.id)
-      // Fix: Force result to be an array
-      const deviceData = Array.isArray(res.data) ? res.data : []
-      setDevices(prev => ({ ...prev, [room.id]: deviceData }))
+      const res = await getDevicesByRoom(room.id);
+      // Same check here: Ensure it is a list
+      const deviceData = Array.isArray(res.data) ? res.data : [];
+      setDevices(prev => ({ ...prev, [room.id]: deviceData }));
     } catch (e) { 
-      console.error(e)
-      setDevices(prev => ({ ...prev, [room.id]: [] }))
+      console.error("Failed to load devices:", e);
+      setDevices(prev => ({ ...prev, [room.id]: [] }));
     }
   }
 
