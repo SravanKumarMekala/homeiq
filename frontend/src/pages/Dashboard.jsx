@@ -32,7 +32,7 @@ export default function Dashboard({ user, onLogout }) {
   const loadRooms = async () => {
     try {
       const res = await getRooms()
-      // This line ensures 'rooms' is ALWAYS an array, even if the backend fails
+      // Fix: Force result to be an array so .map() doesn't crash
       const data = Array.isArray(res.data) ? res.data : [] 
       setRooms(data)
       
@@ -41,14 +41,16 @@ export default function Dashboard({ user, onLogout }) {
       }
     } catch (e) { 
       console.error(e)
-      setRooms([]) // If the request fails, set rooms to an empty list
+      setRooms([]) 
     }
   }
 
   const loadDevices = async (room) => {
+    if (!room?.id) return
     setSelectedRoom(room)
     try {
       const res = await getDevicesByRoom(room.id)
+      // Fix: Force result to be an array
       const deviceData = Array.isArray(res.data) ? res.data : []
       setDevices(prev => ({ ...prev, [room.id]: deviceData }))
     } catch (e) { 
@@ -56,6 +58,7 @@ export default function Dashboard({ user, onLogout }) {
       setDevices(prev => ({ ...prev, [room.id]: [] }))
     }
   }
+
   const addRoom = async () => {
     if (!newRoom.trim()) return
     try {
@@ -63,7 +66,7 @@ export default function Dashboard({ user, onLogout }) {
       setNewRoom('')
       setShowAddRoom(false)
       showToast(`Room "${newRoom}" added!`)
-      loadRooms()
+      setTimeout(() => loadRooms(), 500) // Delay to let DB update
     } catch (e) { showToast('Failed to add room', 'error') }
   }
 
@@ -182,7 +185,6 @@ export default function Dashboard({ user, onLogout }) {
 
       {/* Main content */}
       <div style={s.main}>
-        {/* Toast */}
         {toast && (
           <div style={{ ...s.toast, background: toast.type === 'error' ? 'rgba(239,68,68,0.9)' : toast.type === 'info' ? 'rgba(99,102,241,0.9)' : 'rgba(16,185,129,0.9)' }}>
             {toast.msg}
@@ -191,7 +193,6 @@ export default function Dashboard({ user, onLogout }) {
 
         {tab === 'home' && (
           <div style={s.content}>
-            {/* Header */}
             <div style={s.header}>
               <div>
                 <h1 style={s.pageTitle}>Smart Dashboard</h1>
@@ -210,7 +211,6 @@ export default function Dashboard({ user, onLogout }) {
               </div>
             )}
 
-            {/* Stats row */}
             <div style={s.statsRow}>
               <div style={s.statCard}>
                 <div style={s.statIcon}>⚡</div>
@@ -233,18 +233,8 @@ export default function Dashboard({ user, onLogout }) {
                   <div style={s.statLabel}>Rooms</div>
                 </div>
               </div>
-              {totalWatts > 1000 && (
-                <div style={{ ...s.statCard, borderColor: 'rgba(245,158,11,0.3)', background: 'rgba(245,158,11,0.05)' }}>
-                  <div style={s.statIcon}>⚠️</div>
-                  <div>
-                    <div style={{ ...s.statValue, color: '#f59e0b', fontSize: '13px' }}>High Usage</div>
-                    <div style={s.statLabel}>Consider turning off devices</div>
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Rooms */}
             <div style={s.section}>
               <div style={s.sectionHeader}>
                 <h2 style={s.sectionTitle}>Rooms</h2>
@@ -263,7 +253,7 @@ export default function Dashboard({ user, onLogout }) {
                   </div>
                   <div style={s.addRow}>
                     <span style={s.selectedIcon}>{selectedIcon}</span>
-                    <input style={s.addInput} placeholder="Room name (e.g. Bedroom)"
+                    <input style={s.addInput} placeholder="Room name"
                       value={newRoom}
                       onChange={e => setNewRoom(e.target.value)}
                       onKeyDown={e => e.key === 'Enter' && addRoom()} />
@@ -287,21 +277,16 @@ export default function Dashboard({ user, onLogout }) {
                 ))}
                 {(rooms || []).length === 0 && (
                   <div style={s.emptyState}>
-                    <div style={{ fontSize: '40px', marginBottom: '8px' }}>🏠</div>
-                    <p style={{ color: '#475569' }}>Add your first room to get started!</p>
+                    <p>Add your first room to get started!</p>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Devices */}
             {selectedRoom && (
               <div style={s.section}>
                 <div style={s.sectionHeader}>
-                  <h2 style={s.sectionTitle}>
-                    {selectedRoom.icon} {selectedRoom.name}
-                    <span style={s.deviceCount}>{(currentDevices || []).length} devices</span>
-                  </h2>
+                  <h2 style={s.sectionTitle}>{selectedRoom.icon} {selectedRoom.name}</h2>
                   <button style={s.addBtn} onClick={() => setShowAddDevice(!showAddDevice)}>
                     {showAddDevice ? '✕ Cancel' : '+ Add Device'}
                   </button>
@@ -310,22 +295,19 @@ export default function Dashboard({ user, onLogout }) {
                 {showAddDevice && (
                   <div style={s.addPanel}>
                     <div style={s.addDeviceForm}>
-                      <input style={s.addInput} placeholder="Device name (e.g. Ceiling Fan)"
+                      <input style={s.addInput} placeholder="Device name"
                         value={newDevice.name}
-                        onChange={e => setNewDevice({ ...newDevice, name: e.target.value })}
-                        onKeyDown={e => e.key === 'Enter' && addDevice()} />
+                        onChange={e => setNewDevice({ ...newDevice, name: e.target.value })} />
                       <select style={s.addInput} value={newDevice.type}
                         onChange={e => setNewDevice({ ...newDevice, type: e.target.value })}>
                         <option value="light">💡 Light</option>
                         <option value="fan">🌀 Fan</option>
                         <option value="ac">❄️ AC</option>
                         <option value="tv">📺 TV</option>
-                        <option value="other">🔌 Other</option>
                       </select>
-                      <input style={s.addInput} type="number" placeholder="Watts (e.g. 60)"
-                        value={newDevice.power_watts}
+                      <input style={s.addInput} type="number" value={newDevice.power_watts}
                         onChange={e => setNewDevice({ ...newDevice, power_watts: parseInt(e.target.value) || 0 })} />
-                      <button style={s.confirmBtn} onClick={addDevice}>Add Device</button>
+                      <button style={s.confirmBtn} onClick={addDevice}>Add</button>
                     </div>
                   </div>
                 )}
@@ -334,12 +316,6 @@ export default function Dashboard({ user, onLogout }) {
                   {(currentDevices || []).map(device => (
                     <DeviceCard key={device.id} device={device} onToggle={toggle} onDelete={removeDevice} />
                   ))}
-                  {(currentDevices || []).length === 0 && (
-                    <div style={s.emptyState}>
-                      <div style={{ fontSize: '36px', marginBottom: '8px' }}>🔌</div>
-                      <p style={{ color: '#475569' }}>No devices yet. Add one above!</p>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -361,21 +337,14 @@ function DeviceCard({ device, onToggle, onDelete }) {
   return (
     <div style={{ ...dc.card, borderColor: device.is_on ? color + '40' : 'rgba(99,179,237,0.08)', background: device.is_on ? `rgba(${hexToRgb(color)},0.06)` : 'rgba(13,20,33,0.8)' }}>
       <button style={dc.deleteBtn} onClick={() => onDelete(device)}>✕</button>
-      <div style={{ ...dc.iconWrap, background: device.is_on ? color + '20' : 'rgba(255,255,255,0.04)', border: `1px solid ${device.is_on ? color + '40' : 'rgba(255,255,255,0.06)'}` }}>
+      <div style={{ ...dc.iconWrap, background: device.is_on ? color + '20' : 'rgba(255,255,255,0.04)' }}>
         <span style={{ fontSize: '28px' }}>{icon}</span>
-        {device.is_on && <div style={{ ...dc.glow, boxShadow: `0 0 20px ${color}60` }} />}
       </div>
       <p style={dc.name}>{device.name}</p>
-      <p style={{ ...dc.type, color: device.is_on ? color : '#475569' }}>
-        {device.type.toUpperCase()} · {device.power_watts}W
-      </p>
-      <div style={{ ...dc.toggleTrack, background: device.is_on ? color : 'rgba(255,255,255,0.08)' }}
-        onClick={() => onToggle(device)}>
-        <div style={{ ...dc.toggleThumb, transform: device.is_on ? 'translateX(26px)' : 'translateX(3px)', boxShadow: device.is_on ? `0 2px 8px ${color}80` : 'none' }} />
+      <div style={{ ...dc.toggleTrack, background: device.is_on ? color : 'rgba(255,255,255,0.08)' }} onClick={() => onToggle(device)}>
+        <div style={{ ...dc.toggleThumb, transform: device.is_on ? 'translateX(26px)' : 'translateX(3px)' }} />
       </div>
-      <span style={{ ...dc.status, color: device.is_on ? color : '#334155' }}>
-        {device.is_on ? '● ON' : '○ OFF'}
-      </span>
+      <span style={{ ...dc.status, color: device.is_on ? color : '#334155' }}>{device.is_on ? '● ON' : '○ OFF'}</span>
     </div>
   )
 }
@@ -386,69 +355,65 @@ function hexToRgb(hex) {
 }
 
 const dc = {
-  card: { position: 'relative', borderRadius: '20px', padding: '20px', border: '1px solid', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', transition: 'all 0.3s', cursor: 'default' },
-  deleteBtn: { position: 'absolute', top: '10px', right: '10px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', color: '#ef4444', width: '24px', height: '24px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  iconWrap: { width: '64px', height: '64px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', transition: 'all 0.3s' },
-  glow: { position: 'absolute', inset: '-4px', borderRadius: '22px', opacity: 0.3, pointerEvents: 'none' },
-  name: { fontWeight: '700', fontSize: '15px', textAlign: 'center', color: '#e2e8f0' },
-  type: { fontSize: '11px', fontWeight: '600', letterSpacing: '0.5px', transition: 'color 0.3s', fontFamily: 'JetBrains Mono, monospace' },
-  toggleTrack: { width: '52px', height: '28px', borderRadius: '14px', cursor: 'pointer', position: 'relative', transition: 'background 0.3s' },
+  card: { position: 'relative', borderRadius: '20px', padding: '20px', border: '1px solid', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' },
+  deleteBtn: { position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' },
+  iconWrap: { width: '64px', height: '64px', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  name: { fontWeight: '700', color: '#e2e8f0' },
+  toggleTrack: { width: '52px', height: '28px', borderRadius: '14px', cursor: 'pointer', position: 'relative' },
   toggleThumb: { position: 'absolute', top: '3px', width: '22px', height: '22px', background: 'white', borderRadius: '50%', transition: 'all 0.3s' },
-  status: { fontSize: '12px', fontWeight: '700', letterSpacing: '1px', transition: 'color 0.3s' }
+  status: { fontSize: '12px', fontWeight: '700' }
 }
 
 const s = {
   layout: { display: 'flex', height: '100vh', overflow: 'hidden', background: '#080c14' },
   sidebar: { width: '220px', background: '#0d1421', borderRight: '1px solid rgba(99,179,237,0.08)', display: 'flex', flexDirection: 'column', padding: '20px 12px' },
   sidebarTop: { marginBottom: '32px' },
-  brandRow: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', padding: '0 8px' },
+  brandRow: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' },
   brandIcon: { fontSize: '22px' },
   brandName: { fontSize: '20px', fontWeight: '800', color: '#e2e8f0' },
-  userBadge: { display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(99,179,237,0.08)', borderRadius: '12px', padding: '10px' },
-  userAvatar: { width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '14px', flexShrink: 0 },
-  userName: { fontSize: '13px', fontWeight: '600', color: '#e2e8f0' },
+  userBadge: { display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.04)', padding: '10px', borderRadius: '12px' },
+  userAvatar: { width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700' },
+  userName: { fontSize: '13px', color: '#e2e8f0' },
   userRole: { fontSize: '11px', color: '#475569' },
   nav: { flex: 1, display: 'flex', flexDirection: 'column', gap: '4px' },
-  navBtn: { display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 12px', borderRadius: '12px', border: 'none', background: 'transparent', color: '#475569', fontSize: '14px', fontWeight: '500', cursor: 'pointer', position: 'relative', transition: 'all 0.2s', textAlign: 'left' },
-  navBtnActive: { background: 'rgba(59,130,246,0.12)', color: '#60a5fa', fontWeight: '600' },
-  navIcon: { fontSize: '16px', width: '20px', textAlign: 'center' },
-  navIndicator: { position: 'absolute', right: '0', top: '50%', transform: 'translateY(-50%)', width: '3px', height: '20px', background: '#3b82f6', borderRadius: '2px' },
-  logoutBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '11px 12px', borderRadius: '12px', border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.05)', color: '#f87171', fontSize: '14px', fontWeight: '500', cursor: 'pointer', marginTop: '8px' },
-  main: { flex: 1, overflowY: 'auto', position: 'relative' },
-  content: { padding: '28px', maxWidth: '1100px' },
-  toast: { position: 'fixed', top: '20px', right: '20px', padding: '12px 20px', borderRadius: '12px', color: 'white', fontWeight: '600', fontSize: '14px', zIndex: 1000, backdropFilter: 'blur(10px)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' },
-  pageTitle: { fontSize: '26px', fontWeight: '800', color: '#e2e8f0', letterSpacing: '-0.5px' },
-  pageSubtitle: { color: '#475569', fontSize: '14px', marginTop: '2px' },
-  voiceBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: '12px', color: '#a78bfa', fontSize: '14px', fontWeight: '600', transition: 'all 0.2s' },
-  voiceBtnActive: { background: 'rgba(139,92,246,0.25)', borderColor: '#8b5cf6', animation: 'pulse 1s infinite' },
-  voiceResult: { background: 'rgba(96,165,250,0.06)', border: '1px solid rgba(96,165,250,0.15)', borderRadius: '10px', padding: '10px 14px', marginBottom: '20px', fontSize: '13px' },
-  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '28px' },
-  statCard: { background: 'rgba(13,20,33,0.8)', border: '1px solid rgba(99,179,237,0.1)', borderRadius: '16px', padding: '16px', display: 'flex', alignItems: 'center', gap: '12px' },
+  navBtn: { padding: '11px 12px', borderRadius: '12px', border: 'none', background: 'transparent', color: '#475569', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '10px' },
+  navBtnActive: { background: 'rgba(59,130,246,0.12)', color: '#60a5fa' },
+  navIcon: { width: '20px' },
+  navIndicator: { position: 'absolute', right: '0', width: '3px', height: '20px', background: '#3b82f6' },
+  logoutBtn: { padding: '11px 12px', border: '1px solid #ef4444', background: 'none', color: '#ef4444', borderRadius: '12px', cursor: 'pointer' },
+  main: { flex: 1, overflowY: 'auto' },
+  content: { padding: '28px' },
+  toast: { position: 'fixed', top: '20px', right: '20px', padding: '12px 20px', borderRadius: '12px', color: 'white', zIndex: 1000 },
+  header: { display: 'flex', justifyContent: 'space-between', marginBottom: '24px' },
+  pageTitle: { fontSize: '26px', color: '#e2e8f0' },
+  pageSubtitle: { color: '#475569', fontSize: '14px' },
+  voiceBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 20px', background: 'rgba(139,92,246,0.12)', border: '1px solid #8b5cf6', borderRadius: '12px', color: '#a78bfa' },
+  voiceBtnActive: { background: '#8b5cf6', color: 'white' },
+  voiceResult: { background: 'rgba(96,165,250,0.06)', padding: '10px', borderRadius: '10px', marginBottom: '20px' },
+  statsRow: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '28px' },
+  statCard: { background: 'rgba(13,20,33,0.8)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(99,179,237,0.1)', display: 'flex', gap: '12px' },
   statIcon: { fontSize: '24px' },
   statValue: { fontSize: '22px', fontWeight: '800', color: '#e2e8f0' },
-  statLabel: { fontSize: '12px', color: '#475569', marginTop: '2px' },
+  statLabel: { fontSize: '12px', color: '#475569' },
   section: { marginBottom: '32px' },
   sectionHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' },
-  sectionTitle: { fontSize: '17px', fontWeight: '700', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' },
-  deviceCount: { fontSize: '12px', color: '#475569', fontWeight: '500', background: 'rgba(255,255,255,0.05)', padding: '3px 8px', borderRadius: '20px' },
-  addBtn: { padding: '8px 16px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '10px', color: '#60a5fa', fontSize: '13px', fontWeight: '600', cursor: 'pointer' },
-  addPanel: { background: 'rgba(13,20,33,0.8)', border: '1px solid rgba(99,179,237,0.1)', borderRadius: '14px', padding: '16px', marginBottom: '14px' },
-  iconPicker: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' },
-  iconBtn: { width: '36px', height: '36px', borderRadius: '8px', border: '1px solid rgba(99,179,237,0.1)', background: 'transparent', fontSize: '18px', cursor: 'pointer' },
-  iconBtnActive: { background: 'rgba(59,130,246,0.2)', borderColor: '#3b82f6' },
-  selectedIcon: { fontSize: '22px', flexShrink: 0 },
-  addRow: { display: 'flex', gap: '8px', alignItems: 'center' },
-  addDeviceForm: { display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '8px', alignItems: 'center' },
-  addInput: { padding: '10px 14px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(99,179,237,0.12)', borderRadius: '10px', color: '#e2e8f0', fontSize: '13px', outline: 'none' },
-  confirmBtn: { padding: '10px 18px', background: '#3b82f6', border: 'none', borderRadius: '10px', color: 'white', fontWeight: '700', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' },
+  sectionTitle: { color: '#e2e8f0', fontSize: '17px' },
+  addBtn: { padding: '8px 16px', background: 'rgba(59,130,246,0.1)', border: '1px solid #3b82f6', borderRadius: '10px', color: '#60a5fa', cursor: 'pointer' },
+  addPanel: { background: 'rgba(13,20,33,0.8)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(99,179,237,0.1)', marginBottom: '14px' },
+  iconPicker: { display: 'flex', gap: '8px', marginBottom: '12px' },
+  iconBtn: { padding: '8px', background: 'none', border: '1px solid rgba(99,179,237,0.1)', borderRadius: '8px', cursor: 'pointer' },
+  iconBtnActive: { borderColor: '#3b82f6' },
+  selectedIcon: { fontSize: '22px' },
+  addRow: { display: 'flex', gap: '8px' },
+  addInput: { flex: 1, padding: '10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(99,179,237,0.1)', borderRadius: '10px', color: '#e2e8f0' },
+  confirmBtn: { padding: '10px 20px', background: '#3b82f6', color: 'white', borderRadius: '10px', border: 'none', cursor: 'pointer' },
   roomGrid: { display: 'flex', gap: '10px', flexWrap: 'wrap' },
-  roomCard: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'rgba(13,20,33,0.8)', border: '1px solid rgba(99,179,237,0.08)', borderRadius: '14px', cursor: 'pointer', transition: 'all 0.2s', position: 'relative' },
-  roomCardActive: { background: 'rgba(59,130,246,0.1)', borderColor: 'rgba(59,130,246,0.3)' },
+  roomCard: { display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 16px', background: 'rgba(13,20,33,0.8)', border: '1px solid rgba(99,179,237,0.08)', borderRadius: '14px', cursor: 'pointer' },
+  roomCardActive: { borderColor: '#3b82f6', background: 'rgba(59,130,246,0.1)' },
   roomEmoji: { fontSize: '18px' },
-  roomName: { fontSize: '14px', fontWeight: '600', color: '#e2e8f0' },
-  roomCount: { fontSize: '12px', color: '#475569', background: 'rgba(255,255,255,0.05)', padding: '2px 7px', borderRadius: '10px' },
-  deleteBtn: { background: 'none', border: 'none', color: '#334155', fontSize: '12px', cursor: 'pointer', padding: '2px', marginLeft: '4px' },
+  roomName: { color: '#e2e8f0' },
+  roomCount: { fontSize: '12px', color: '#475569' },
+  deleteBtn: { color: '#475569', background: 'none', border: 'none', cursor: 'pointer' },
   deviceGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '14px' },
-  emptyState: { gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: '#475569', fontSize: '14px' },
+  emptyState: { textAlign: 'center', padding: '20px', color: '#475569' }
 }
