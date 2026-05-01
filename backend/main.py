@@ -27,6 +27,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.get("/")
+def read_root():
+    return {
+        "message": "Welcome to HomeIQ API",
+        "status": "online",
+        "documentation": "/docs"
+    }
+
 # Include all your routers so they show up in /docs
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(rooms.router, prefix="/rooms", tags=["Rooms"])
