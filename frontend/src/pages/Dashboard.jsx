@@ -34,13 +34,13 @@ export default function Dashboard({ user, onLogout }) {
       const res = await getRooms();
       // This line is the most important: It checks if we got a list. 
       // If not, it uses an empty list [] instead of crashing.
-      const data = Array.isArray(res.data) ? res.data : []; 
+      const data = Array.isArray(res.data) ? res.data : [];
       setRooms(data);
-      
+
       if (data.length > 0 && !selectedRoom) {
         loadDevices(data[0]);
       }
-    } catch (e) { 
+    } catch (e) {
       console.error("Failed to load rooms:", e);
       setRooms([]); // Fallback to empty list on error
     }
@@ -54,7 +54,7 @@ export default function Dashboard({ user, onLogout }) {
       // Same check here: Ensure it is a list
       const deviceData = Array.isArray(res.data) ? res.data : [];
       setDevices(prev => ({ ...prev, [room.id]: deviceData }));
-    } catch (e) { 
+    } catch (e) {
       console.error("Failed to load devices:", e);
       setDevices(prev => ({ ...prev, [room.id]: [] }));
     }
