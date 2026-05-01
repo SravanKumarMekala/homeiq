@@ -32,21 +32,30 @@ export default function Dashboard({ user, onLogout }) {
   const loadRooms = async () => {
     try {
       const res = await getRooms()
-      setRooms(res.data)
-      if (res.data.length > 0 && !selectedRoom) {
-        loadDevices(res.data[0])
+      // This line ensures 'rooms' is ALWAYS an array, even if the backend fails
+      const data = Array.isArray(res.data) ? res.data : [] 
+      setRooms(data)
+      
+      if (data.length > 0 && !selectedRoom) {
+        loadDevices(data[0])
       }
-    } catch (e) { console.error(e) }
+    } catch (e) { 
+      console.error(e)
+      setRooms([]) // If the request fails, set rooms to an empty list
+    }
   }
 
   const loadDevices = async (room) => {
     setSelectedRoom(room)
     try {
       const res = await getDevicesByRoom(room.id)
-      setDevices(prev => ({ ...prev, [room.id]: res.data }))
-    } catch (e) { console.error(e) }
+      const deviceData = Array.isArray(res.data) ? res.data : []
+      setDevices(prev => ({ ...prev, [room.id]: deviceData }))
+    } catch (e) { 
+      console.error(e)
+      setDevices(prev => ({ ...prev, [room.id]: [] }))
+    }
   }
-
   const addRoom = async () => {
     if (!newRoom.trim()) return
     try {
