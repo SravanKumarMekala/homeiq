@@ -49,7 +49,7 @@ export default function Guest() {
         <div style={s.field}>
           <label style={s.label}>Access Duration</label>
           <div style={s.presets}>
-            {presets.map(p => (
+            {(presets || []).map(p => (
               <button key={p.value}
                 style={{ ...s.preset, ...(hours === p.value ? s.presetActive : {}) }}
                 onClick={() => setHours(p.value)}>
@@ -62,7 +62,7 @@ export default function Guest() {
         <div style={s.field}>
           <label style={s.label}>Room Access</label>
           <div style={s.roomOptions}>
-            {['all', 'bedroom', 'kitchen', 'living room'].map(r => (
+            {(['all', 'bedroom', 'kitchen', 'living room'] || []).map(r => (
               <button key={r}
                 style={{ ...s.roomOption, ...(rooms === r ? s.roomOptionActive : {}) }}
                 onClick={() => setRooms(r)}>

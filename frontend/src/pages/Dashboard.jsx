@@ -186,7 +186,7 @@ export default function Dashboard({ user, onLogout }) {
             <div style={s.header}>
               <div>
                 <h1 style={s.pageTitle}>Smart Dashboard</h1>
-                <p style={s.pageSubtitle}>{rooms.length} rooms · {Object.values(devices).flat().length} devices</p>
+                <p style={s.pageSubtitle}>{(rooms || []).length} rooms · {Object.values(devices).flat().length} devices</p>
               </div>
               <button style={{ ...s.voiceBtn, ...(listening ? s.voiceBtnActive : {}) }} onClick={startVoice}>
                 <span style={{ fontSize: '18px' }}>{listening ? '🎙️' : '🎤'}</span>
@@ -213,14 +213,14 @@ export default function Dashboard({ user, onLogout }) {
               <div style={s.statCard}>
                 <div style={s.statIcon}>💡</div>
                 <div>
-                  <div style={s.statValue}>{onDevices.length}</div>
+                  <div style={s.statValue}>{(onDevices || []).length}</div>
                   <div style={s.statLabel}>Devices ON</div>
                 </div>
               </div>
               <div style={s.statCard}>
                 <div style={s.statIcon}>🏠</div>
                 <div>
-                  <div style={s.statValue}>{rooms.length}</div>
+                  <div style={s.statValue}>{(rooms || []).length}</div>
                   <div style={s.statLabel}>Rooms</div>
                 </div>
               </div>
@@ -264,7 +264,7 @@ export default function Dashboard({ user, onLogout }) {
               )}
 
               <div style={s.roomGrid}>
-                {rooms.map(room => (
+                {(rooms || []).map(room => (
                   <div key={room.id}
                     style={{ ...s.roomCard, ...(selectedRoom?.id === room.id ? s.roomCardActive : {}) }}
                     onClick={() => loadDevices(room)}>
@@ -276,7 +276,7 @@ export default function Dashboard({ user, onLogout }) {
                     <button style={s.deleteBtn} onClick={e => { e.stopPropagation(); removeRoom(room) }}>✕</button>
                   </div>
                 ))}
-                {rooms.length === 0 && (
+                {(rooms || []).length === 0 && (
                   <div style={s.emptyState}>
                     <div style={{ fontSize: '40px', marginBottom: '8px' }}>🏠</div>
                     <p style={{ color: '#475569' }}>Add your first room to get started!</p>
@@ -291,7 +291,7 @@ export default function Dashboard({ user, onLogout }) {
                 <div style={s.sectionHeader}>
                   <h2 style={s.sectionTitle}>
                     {selectedRoom.icon} {selectedRoom.name}
-                    <span style={s.deviceCount}>{currentDevices.length} devices</span>
+                    <span style={s.deviceCount}>{(currentDevices || []).length} devices</span>
                   </h2>
                   <button style={s.addBtn} onClick={() => setShowAddDevice(!showAddDevice)}>
                     {showAddDevice ? '✕ Cancel' : '+ Add Device'}
@@ -322,10 +322,10 @@ export default function Dashboard({ user, onLogout }) {
                 )}
 
                 <div style={s.deviceGrid}>
-                  {currentDevices.map(device => (
+                  {(currentDevices || []).map(device => (
                     <DeviceCard key={device.id} device={device} onToggle={toggle} onDelete={removeDevice} />
                   ))}
-                  {currentDevices.length === 0 && (
+                  {(currentDevices || []).length === 0 && (
                     <div style={s.emptyState}>
                       <div style={{ fontSize: '36px', marginBottom: '8px' }}>🔌</div>
                       <p style={{ color: '#475569' }}>No devices yet. Add one above!</p>

@@ -17,7 +17,7 @@ export default function Logs() {
       <div style={s.header}>
         <div>
           <h1 style={s.title}>Activity Logs</h1>
-          <p style={s.subtitle}>{logs.length} total events recorded</p>
+          <p style={s.subtitle}>{(logs || []).length} total events recorded</p>
         </div>
         <div style={s.filters}>
           {['all', 'on', 'off'].map(f => (
@@ -40,7 +40,7 @@ export default function Logs() {
       )}
 
       <div style={s.list}>
-        {filtered.map((log, i) => (
+        {(filtered || []).map((log, i) => (
           <div key={log.id} style={{ ...s.logCard, animationDelay: `${i * 0.05}s` }}>
             <div style={{ ...s.dot, background: log.action === 'turned_on' ? '#10b981' : '#ef4444' }} />
             <div style={s.logInfo}>

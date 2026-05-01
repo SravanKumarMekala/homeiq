@@ -53,7 +53,7 @@ export default function Scheduler() {
               <select style={s.input} value={form.device_id}
                 onChange={e => setForm({ ...form, device_id: e.target.value })}>
                 <option value="">Select a device...</option>
-                {devices.map(d => <option key={d.id} value={d.id}>{d.name} ({d.type})</option>)}
+                {(devices || []).map(d => <option key={d.id} value={d.id}>{d.name} ({d.type})</option>)}
               </select>
             </div>
             <div style={s.field}>
@@ -74,13 +74,13 @@ export default function Scheduler() {
           <div style={s.field}>
             <label style={s.label}>Repeat on days</label>
             <div style={s.dayPicker}>
-              {days.map(day => (
+              {((days || []).map(day => (
                 <button key={day}
                   style={{ ...s.dayBtn, ...(selectedDays.includes(day) ? s.dayBtnActive : {}) }}
                   onClick={() => toggleDay(day)}>
                   {day}
                 </button>
-              ))}
+              )))}
             </div>
           </div>
 
@@ -91,7 +91,7 @@ export default function Scheduler() {
       )}
 
       <div style={s.list}>
-        {schedules.length === 0 && (
+        {(schedules || []).length === 0 && (
           <div style={s.empty}>
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>⏰</div>
             <p>No schedules yet.</p>
