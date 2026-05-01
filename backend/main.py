@@ -1,30 +1,24 @@
-import os
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import models
 from database import engine
-
-# Import your router modules
 from routers import auth, rooms, devices, logs, schedules, guests
 
-# Setup Logging
+# Setup Logging to see errors in Render logs
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Trigger Database Table Creation on Startup
+try:
+    models.Base.metadata.create_all(bind=engine)
+    logger.info("Database tables verified/created successfully.")
+except Exception as e:
+    logger.error(f"DATABASE ERROR: {e}")
+
 app = FastAPI(title="HomeIQ API")
 
-# Trigger Database Table Creation[cite: 3]
-@app.on_event("startup")
-def on_startup():
-    logger.info("Attempting to connect to database...")
-    try:
-        models.Base.metadata.create_all(bind=engine)
-        logger.info("Database tables created/verified successfully.")
-    except Exception as e:
-        logger.error(f"DATABASE CONNECTION ERROR: {e}")
-
-# Enable CORS
+# Enable CORS for the Frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -33,8 +27,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- INCLUDE YOUR ROUTERS HERE ---[cite: 3]
-app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+# Include all your routers so they show up in /docs
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 app.include_router(rooms.router, prefix="/rooms", tags=["Rooms"])
 app.include_router(devices.router, prefix="/devices", tags=["Devices"])
 app.include_router(logs.router, prefix="/logs", tags=["Logs"])
@@ -43,4 +37,4 @@ app.include_router(guests.router, prefix="/guests", tags=["Guests"])
 
 @app.get("/health")
 def health_check():
-    return {"status": "alive", "database": "connected"}
+    return {"status": "online"}
