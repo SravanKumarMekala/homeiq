@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(override=True)
 
 # This tells the code: Use the Railway variable if it exists, otherwise use localhost
 DATABASE_URL = os.getenv("DATABASE_URL")
