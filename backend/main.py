@@ -8,6 +8,7 @@ from database import engine
 # 1. Setup Logging so Render shows us the exact error
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
